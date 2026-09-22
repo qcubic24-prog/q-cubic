@@ -1,0 +1,234 @@
+<svg viewBox="0 0 540 540" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Q-CUBIC Platform Diagram">
+  <defs>
+    <!-- Card Drop Shadow Filter -->
+    <filter id="card-shadow" x="-20%" y="-20%" width="140%" height="140%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#FF5500" flood-opacity="0.12" />
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.05" />
+    </filter>
+
+    <!-- Node Card Drop Shadow -->
+    <filter id="node-shadow" x="-25%" y="-25%" width="150%" height="150%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.06" />
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#FF5500" flood-opacity="0.08" />
+    </filter>
+
+    <!-- Ambient Center Glow -->
+    <radialGradient id="center-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FF5500" stop-opacity="0.22" />
+      <stop offset="55%" stop-color="#FF7A29" stop-opacity="0.08" />
+      <stop offset="100%" stop-color="#FF7A29" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Linear Gradient for Top Cube Face -->
+    <linearGradient id="cube-top-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF7F32" />
+      <stop offset="100%" stop-color="#FF5500" />
+    </linearGradient>
+
+    <!-- Linear Gradient for Left Cube Face -->
+    <linearGradient id="cube-left-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF5500" />
+      <stop offset="100%" stop-color="#E04700" />
+    </linearGradient>
+
+    <!-- Linear Gradient for Right Cube Face -->
+    <linearGradient id="cube-right-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E04700" />
+      <stop offset="100%" stop-color="#C73D00" />
+    </linearGradient>
+  </defs>
+
+  <!-- Outer Rounded Container Card with soft border matching screenshot -->
+  <rect x="18" y="18" width="504" height="504" rx="34" fill="#FFFFFF" stroke="#FEE8DD" stroke-width="1.5" filter="url(#card-shadow)" />
+
+  <!-- Soft Ambient Glow behind Cube -->
+  <circle cx="270" cy="270" r="175" fill="url(#center-glow)" />
+
+  <!-- Dashed Orbital Circular Guide -->
+  <circle cx="270" cy="270" r="150" fill="none" stroke="#FF7A29" stroke-width="1.2" stroke-dasharray="4 5" opacity="0.55" />
+
+  <!-- Subtle Inner Diagonal Construction Lines -->
+  <line x1="165" y1="165" x2="375" y2="375" stroke="#FF7A29" stroke-width="0.75" stroke-dasharray="2 4" opacity="0.2" />
+  <line x1="165" y1="375" x2="375" y2="165" stroke="#FF7A29" stroke-width="0.75" stroke-dasharray="2 4" opacity="0.2" />
+
+  <!-- Orbit Connection Dots -->
+  <circle cx="270" cy="120" r="3.5" fill="#FF5500" />
+  <circle cx="420" cy="270" r="3.5" fill="#FF5500" />
+  <circle cx="270" cy="420" r="3.5" fill="#FF5500" />
+  <circle cx="120" cy="270" r="3.5" fill="#FF5500" />
+
+  <!-- Soft Cube Base Drop Shadow -->
+  <ellipse cx="270" cy="358" rx="72" ry="18" fill="#FF5500" opacity="0.14" filter="blur(6px)" />
+  <ellipse cx="270" cy="356" rx="55" ry="12" fill="#201008" opacity="0.08" />
+
+  <!-- CENTRAL ISOMETRIC 3D CUBE -->
+  <g id="center-cube">
+    <!-- Top Face -->
+    <polygon
+      points="270,165 348,210 270,255 192,210"
+      fill="url(#cube-top-grad)"
+      stroke="#FF5500"
+      stroke-width="1.5"
+      stroke-linejoin="round"
+    />
+
+    <!-- Left Face -->
+    <polygon
+      points="192,210 270,255 270,345 192,300"
+      fill="url(#cube-left-grad)"
+      stroke="#E04700"
+      stroke-width="1.5"
+      stroke-linejoin="round"
+    />
+
+    <!-- Right Face -->
+    <polygon
+      points="270,255 348,210 348,300 270,345"
+      fill="url(#cube-right-grad)"
+      stroke="#C73D00"
+      stroke-width="1.5"
+      stroke-linejoin="round"
+    />
+
+    <!-- Top Face White Facet Diamond -->
+    <polygon
+      points="270,195 306,215 270,235 234,215"
+      fill="#FFFFFF"
+      opacity="0.96"
+    />
+    <!-- Center Dot on Top Facet -->
+    <circle cx="270" cy="215" r="8" fill="#FF5500" />
+
+    <!-- Left Face Circuit Trace (White Inverted-L with terminal circle) -->
+    <path
+      d="M250,277 L220,294 L220,320"
+      stroke="#FFFFFF"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      opacity="0.95"
+    />
+    <circle cx="250" cy="277" r="3.5" fill="#FFFFFF" />
+
+    <!-- Right Face Circuit Trace (White Mirrored Inverted-L with terminal circle) -->
+    <path
+      d="M290,277 L320,294 L320,320"
+      stroke="#FFFFFF"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      opacity="0.95"
+    />
+    <circle cx="290" cy="277" r="3.5" fill="#FFFFFF" />
+  </g>
+
+  <!-- 1. TOP NODE: BUILD -->
+  <g id="node-build" transform="translate(270, 78)">
+    <!-- Connection Stem -->
+    <line x1="0" y1="28" x2="0" y2="42" stroke="#FF5500" stroke-width="1.5" />
+    <circle cx="0" cy="42" r="3.5" fill="#FF5500" />
+
+    <!-- Icon Card -->
+    <g transform="translate(-24, -24)" filter="url(#node-shadow)">
+      <rect width="48" height="48" rx="14" fill="#FFFFFF" stroke="#F1F3F5" stroke-width="1" />
+      <!-- Browser window icon with code </> -->
+      <rect x="9" y="11" width="30" height="26" rx="5" fill="#FF5500" />
+      <circle cx="15" cy="16" r="1.5" fill="#FFFFFF" />
+      <circle cx="19.5" cy="16" r="1.5" fill="#FFFFFF" />
+      <circle cx="24" cy="16" r="1.5" fill="#FFFFFF" />
+      <!-- Inner code area -->
+      <rect x="11" y="20" width="26" height="15" rx="3" fill="#FFFFFF" />
+      <text x="24" y="31" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="10" font-weight="700" fill="#111827">&lt;/&gt;</text>
+    </g>
+
+    <!-- Label Pill -->
+    <g transform="translate(-40, 32)" filter="url(#node-shadow)">
+      <rect width="80" height="26" rx="13" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1" />
+      <text x="40" y="17" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="700" letter-spacing="0.06em" fill="#111827">BUILD</text>
+    </g>
+  </g>
+
+  <!-- 2. RIGHT NODE: SCALE -->
+  <g id="node-scale" transform="translate(440, 270)">
+    <!-- Connection Stem -->
+    <line x1="-30" y1="0" x2="-20" y2="0" stroke="#FF5500" stroke-width="1.5" />
+    <circle cx="-20" cy="0" r="3.5" fill="#FF5500" />
+
+    <!-- Icon Card -->
+    <g transform="translate(-24, -46)" filter="url(#node-shadow)">
+      <rect width="48" height="48" rx="14" fill="#FFFFFF" stroke="#F1F3F5" stroke-width="1" />
+      <!-- Rising Growth Chart Icon -->
+      <rect x="12" y="27" width="5" height="10" rx="1.5" fill="#D1D5DB" />
+      <rect x="21" y="22" width="5" height="15" rx="1.5" fill="#D1D5DB" />
+      <rect x="30" y="16" width="5" height="21" rx="1.5" fill="#FF5500" />
+      <!-- Arrow -->
+      <path d="M15 22 L24 14 L33 11" stroke="#FF5500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M28 11 L33 11 L33 16" fill="none" stroke="#FF5500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+
+    <!-- Label Pill -->
+    <g transform="translate(-42, 10)" filter="url(#node-shadow)">
+      <rect width="84" height="26" rx="13" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1" />
+      <text x="42" y="17" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="700" letter-spacing="0.06em" fill="#111827">SCALE</text>
+    </g>
+  </g>
+
+  <!-- 3. BOTTOM NODE: CONNECT -->
+  <g id="node-connect" transform="translate(270, 460)">
+    <!-- Connection Stem -->
+    <line x1="0" y1="-28" x2="0" y2="-40" stroke="#FF5500" stroke-width="1.5" />
+    <circle cx="0" cy="-40" r="3.5" fill="#FF5500" />
+
+    <!-- Icon Card -->
+    <g transform="translate(-24, -48)" filter="url(#node-shadow)">
+      <rect width="48" height="48" rx="14" fill="#FFFFFF" stroke="#F1F3F5" stroke-width="1" />
+      <!-- Network Nodes Icon (3 orange circles connected in triangle) -->
+      <line x1="24" y1="16" x2="16" y2="31" stroke="#FF5500" stroke-width="2" stroke-linecap="round" />
+      <line x1="24" y1="16" x2="32" y2="31" stroke="#FF5500" stroke-width="2" stroke-linecap="round" />
+      <line x1="16" y1="31" x2="32" y2="31" stroke="#FF5500" stroke-width="2" stroke-linecap="round" />
+      <circle cx="24" cy="16" r="3.5" fill="#FF5500" />
+      <circle cx="16" cy="31" r="3.5" fill="#FF5500" />
+      <circle cx="32" cy="31" r="3.5" fill="#FF5500" />
+    </g>
+
+    <!-- Label Pill -->
+    <g transform="translate(-48, 8)" filter="url(#node-shadow)">
+      <rect width="96" height="26" rx="13" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1" />
+      <text x="48" y="17" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="700" letter-spacing="0.06em" fill="#111827">CONNECT</text>
+    </g>
+  </g>
+
+  <!-- 4. LEFT NODE: AUTOMATE -->
+  <g id="node-automate" transform="translate(100, 270)">
+    <!-- Connection Stem -->
+    <line x1="30" y1="0" x2="20" y2="0" stroke="#FF5500" stroke-width="1.5" />
+    <circle cx="20" cy="0" r="3.5" fill="#FF5500" />
+
+    <!-- Icon Card -->
+    <g transform="translate(-24, -46)" filter="url(#node-shadow)">
+      <rect width="48" height="48" rx="14" fill="#FFFFFF" stroke="#F1F3F5" stroke-width="1" />
+      <!-- Two Interlocking Gears Icon -->
+      <!-- Gear 1 (Main) -->
+      <g transform="translate(18, 22)">
+        <circle cx="0" cy="0" r="8" fill="none" stroke="#FF5500" stroke-width="2.5" />
+        <circle cx="0" cy="0" r="3.5" fill="#FF5500" />
+        <!-- Teeth -->
+        <line x1="0" y1="-10" x2="0" y2="-7" stroke="#FF5500" stroke-width="2.5" stroke-linecap="round" />
+        <line x1="0" y1="7" x2="0" y2="10" stroke="#FF5500" stroke-width="2.5" stroke-linecap="round" />
+        <line x1="-10" y1="0" x2="-7" y2="0" stroke="#FF5500" stroke-width="2.5" stroke-linecap="round" />
+        <line x1="7" y1="0" x2="10" y2="0" stroke="#FF5500" stroke-width="2.5" stroke-linecap="round" />
+      </g>
+      <!-- Gear 2 (Smaller accent gear) -->
+      <g transform="translate(29, 31)">
+        <circle cx="0" cy="0" r="5" fill="none" stroke="#FFA366" stroke-width="2" />
+        <circle cx="0" cy="0" r="2" fill="#FFA366" />
+      </g>
+    </g>
+
+    <!-- Label Pill -->
+    <g transform="translate(-54, 10)" filter="url(#node-shadow)">
+      <rect width="108" height="26" rx="13" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1" />
+      <text x="54" y="17" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="700" letter-spacing="0.06em" fill="#111827">AUTOMATE</text>
+    </g>
+  </g>
+</svg>

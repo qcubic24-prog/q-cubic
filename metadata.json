@@ -1,0 +1,6 @@
+{
+  "name": "Mainframe",
+  "description": "Interactive single-page landing website featuring hero interface, About Us, What We Build services, and Contact Us section.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
