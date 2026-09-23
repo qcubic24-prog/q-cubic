@@ -1,56 +1,188 @@
 import { useEffect, useRef } from 'react';
 
-const VIDEO_URL =
-  'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260530_042513_df96a13b-6155-4f6e-8b93-c9dee66fba08.mp4';
-const SENSITIVITY = 0.75;
-const DAMPING = 0.14; // Smooth exponential ease-out factor
+const TOTAL_FRAMES = 97;
+
+function getFrameUrl(index: number): string {
+  const num = String(index + 1).padStart(3, '0');
+  return `/banner-frames/frame_${num}.webp`;
+}
 
 export default function BackgroundVideo() {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const targetTimeRef = useRef<number>(0);
-  const currentLerpTimeRef = useRef<number>(0);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const imagesRef = useRef<(HTMLImageElement | null)[]>(new Array(TOTAL_FRAMES).fill(null));
+  const isLoadedRef = useRef<boolean[]>(new Array(TOTAL_FRAMES).fill(false));
+
+  // Animation progress: 0 to 1
+  const targetProgressRef = useRef<number>(0.5);
+  const currentProgressRef = useRef<number>(0.5);
+  const lastDrawnFrameRef = useRef<number>(-1);
+
+  // Gesture tracking
   const prevXRef = useRef<number | null>(null);
-  const isDraggingRef = useRef<boolean>(false);
-  const velocityRef = useRef<number>(0);
-  const lastSeekTimestampRef = useRef<number>(0);
+  const lastActiveTimestampRef = useRef<number>(performance.now());
   const rafIdRef = useRef<number | null>(null);
 
   useEffect(() => {
-    // High-performance RAF animation loop for silky-smooth 60/120fps video scrubbing
-    const loop = (time: number) => {
-      const video = videoRef.current;
-      if (video && video.duration && !Number.isNaN(video.duration)) {
-        // Inertial velocity glide when drag is released
-        if (!isDraggingRef.current && Math.abs(velocityRef.current) > 0.0001) {
-          targetTimeRef.current = Math.min(
-            Math.max(targetTimeRef.current + velocityRef.current, 0),
-            video.duration
-          );
-          velocityRef.current *= 0.88; // Gentle friction decay
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // High-DPI canvas resize handling
+    const handleResize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+      lastDrawnFrameRef.current = -1; // Invalidate to redraw immediately
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    let isCancelled = false;
+
+    const renderCurrentFrame = (img: HTMLImageElement) => {
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      // Positioning coordinates:
+      // Desktop (>= 1024px): 70% X, 50% Y (places character on the right, text on the left)
+      // Mobile & Tablet (< 1024px): 50% X, 36% Y (places character in upper portion, text at bottom)
+      const isDesktop = w >= 1024;
+      const focalX = isDesktop ? 0.70 : 0.50;
+      const focalY = isDesktop ? 0.50 : 0.36;
+
+      const naturalW = img.naturalWidth || 1280;
+      const naturalH = img.naturalHeight || 724;
+      const imgAspect = naturalW / naturalH;
+      const canvasAspect = w / h;
+
+      let drawW: number;
+      let drawH: number;
+
+      if (canvasAspect > imgAspect) {
+        drawW = w;
+        drawH = w / imgAspect;
+      } else {
+        drawH = h;
+        drawW = h * imgAspect;
+      }
+
+      const drawX = (w - drawW) * focalX;
+      const drawY = (h - drawH) * focalY;
+
+      ctx.save();
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, w, h);
+      ctx.drawImage(img, drawX, drawY, drawW, drawH);
+      ctx.restore();
+    };
+
+    // Helper to find closest loaded frame
+    const getBestAvailableImage = (targetIndex: number): HTMLImageElement | null => {
+      if (isLoadedRef.current[targetIndex] && imagesRef.current[targetIndex]) {
+        return imagesRef.current[targetIndex];
+      }
+      for (let offset = 1; offset < TOTAL_FRAMES; offset++) {
+        const left = targetIndex - offset;
+        const right = targetIndex + offset;
+        if (left >= 0 && isLoadedRef.current[left] && imagesRef.current[left]) {
+          return imagesRef.current[left];
         }
+        if (right < TOTAL_FRAMES && isLoadedRef.current[right] && imagesRef.current[right]) {
+          return imagesRef.current[right];
+        }
+      }
+      return imagesRef.current[0];
+    };
 
-        const target = targetTimeRef.current;
-        const current = currentLerpTimeRef.current;
-        const diff = target - current;
+    // Load initial first frame immediately for instant first-paint
+    const firstImg = new Image();
+    firstImg.decoding = 'async';
+    firstImg.src = getFrameUrl(0);
+    firstImg.onload = () => {
+      if (isCancelled) return;
+      imagesRef.current[0] = firstImg;
+      isLoadedRef.current[0] = true;
+      renderCurrentFrame(firstImg);
+    };
 
-        // Smoothly interpolate towards target
-        if (Math.abs(diff) > 0.002) {
-          currentLerpTimeRef.current = current + diff * DAMPING;
+    // Preload all remaining frames in chunks to prevent network blocking
+    const preloadAll = async () => {
+      const priorityIndices: number[] = [];
+      // Step 1: Every 4th frame for instant turnaround responsiveness
+      for (let i = 0; i < TOTAL_FRAMES; i += 4) {
+        if (i !== 0) priorityIndices.push(i);
+      }
+      // Step 2: Remaining frames
+      for (let i = 0; i < TOTAL_FRAMES; i++) {
+        if (!priorityIndices.includes(i) && i !== 0) {
+          priorityIndices.push(i);
+        }
+      }
 
-          // Seek when video is not actively seeking and at least 16ms has elapsed (~60fps ceiling)
-          if (!video.seeking && time - lastSeekTimestampRef.current >= 16) {
-            lastSeekTimestampRef.current = time;
-            const timeToSet = currentLerpTimeRef.current;
-            try {
-              if ('fastSeek' in video && typeof (video as any).fastSeek === 'function') {
-                (video as any).fastSeek(timeToSet);
-              } else {
-                video.currentTime = timeToSet;
-              }
-            } catch {
-              video.currentTime = timeToSet;
-            }
-          }
+      const batchSize = 8;
+      for (let i = 0; i < priorityIndices.length; i += batchSize) {
+        if (isCancelled) break;
+        const batch = priorityIndices.slice(i, i + batchSize);
+        await Promise.all(
+          batch.map((idx) => {
+            return new Promise<void>((resolve) => {
+              const img = new Image();
+              img.decoding = 'async';
+              img.src = getFrameUrl(idx);
+              img.onload = () => {
+                if (!isCancelled) {
+                  imagesRef.current[idx] = img;
+                  isLoadedRef.current[idx] = true;
+                }
+                resolve();
+              };
+              img.onerror = () => resolve();
+            });
+          })
+        );
+      }
+    };
+
+    preloadAll();
+
+    // 60 / 120 fps Animation Loop
+    const loop = (time: number) => {
+      // Gentle subtle breathing micro-sway when user has been idle for 3+ seconds
+      const timeSinceActive = time - lastActiveTimestampRef.current;
+      if (timeSinceActive > 3000) {
+        const idleWave = Math.sin(time * 0.001) * 0.02;
+        targetProgressRef.current = Math.min(1, Math.max(0, 0.5 + idleWave));
+      }
+
+      const target = targetProgressRef.current;
+      const current = currentProgressRef.current;
+      const diff = target - current;
+
+      // Snappy and ultra-responsive damping (0.32 gives instant tracking with fluid momentum)
+      if (Math.abs(diff) > 0.001) {
+        currentProgressRef.current = current + diff * 0.32;
+      } else {
+        currentProgressRef.current = target;
+      }
+
+      const frameIndex = Math.min(
+        TOTAL_FRAMES - 1,
+        Math.max(0, Math.round(currentProgressRef.current * (TOTAL_FRAMES - 1)))
+      );
+
+      if (frameIndex !== lastDrawnFrameRef.current) {
+        const img = getBestAvailableImage(frameIndex);
+        if (img) {
+          renderCurrentFrame(img);
+          lastDrawnFrameRef.current = frameIndex;
         }
       }
 
@@ -59,131 +191,79 @@ export default function BackgroundVideo() {
 
     rafIdRef.current = requestAnimationFrame(loop);
 
-    const handlePointerDown = (clientX: number) => {
-      isDraggingRef.current = true;
-      prevXRef.current = clientX;
-      velocityRef.current = 0;
-    };
-
-    const handlePointerMove = (clientX: number) => {
-      const video = videoRef.current;
-      if (!video || !video.duration) return;
+    // Instant cursor & gesture interaction
+    const onPointerMove = (clientX: number) => {
+      lastActiveTimestampRef.current = performance.now();
 
       if (prevXRef.current === null) {
         prevXRef.current = clientX;
         return;
       }
 
-      const delta = clientX - prevXRef.current;
+      const deltaX = clientX - prevXRef.current;
       prevXRef.current = clientX;
 
-      const timeOffset = (delta / window.innerWidth) * SENSITIVITY * video.duration;
-      velocityRef.current = timeOffset * 0.35; // Capture gesture momentum
+      // Both delta shake and absolute coordinate mapping:
+      // Moving or shaking the cursor moves the character immediately with 0 delay!
+      const normalizedX = Math.min(1, Math.max(0, clientX / window.innerWidth));
+      const deltaInfluence = (deltaX / window.innerWidth) * 2.5;
 
-      targetTimeRef.current = Math.min(
-        Math.max(targetTimeRef.current + timeOffset, 0),
-        video.duration
+      const nextTarget = Math.min(
+        1,
+        Math.max(0, targetProgressRef.current + deltaInfluence * 0.75 + (normalizedX - targetProgressRef.current) * 0.15)
       );
+
+      targetProgressRef.current = nextTarget;
     };
 
-    const handlePointerUp = () => {
-      isDraggingRef.current = false;
+    const handleMouseMove = (e: MouseEvent) => {
+      onPointerMove(e.clientX);
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        prevXRef.current = e.touches[0].clientX;
+        lastActiveTimestampRef.current = performance.now();
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        onPointerMove(e.touches[0].clientX);
+      }
+    };
+
+    const handlePointerEnd = () => {
       prevXRef.current = null;
     };
 
-    const onMouseDown = (e: MouseEvent) => {
-      handlePointerDown(e.clientX);
-    };
-
-    const onMouseMove = (e: MouseEvent) => {
-      handlePointerMove(e.clientX);
-    };
-
-    const onMouseUp = () => {
-      handlePointerUp();
-    };
-
-    const onTouchStart = (e: TouchEvent) => {
-      if (e.touches.length > 0) {
-        handlePointerDown(e.touches[0].clientX);
-      }
-    };
-
-    const onTouchMove = (e: TouchEvent) => {
-      if (e.touches.length > 0) {
-        handlePointerMove(e.touches[0].clientX);
-      }
-    };
-
-    const onTouchEnd = () => {
-      handlePointerUp();
-    };
-
-    window.addEventListener('mousedown', onMouseDown);
-    window.addEventListener('mousemove', onMouseMove, { passive: true });
-    window.addEventListener('mouseup', onMouseUp);
-    window.addEventListener('mouseleave', onMouseUp);
-    window.addEventListener('touchstart', onTouchStart, { passive: true });
-    window.addEventListener('touchmove', onTouchMove, { passive: true });
-    window.addEventListener('touchend', onTouchEnd);
-    window.addEventListener('touchcancel', onTouchEnd);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    window.addEventListener('mouseleave', handlePointerEnd);
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchend', handlePointerEnd);
+    window.addEventListener('touchcancel', handlePointerEnd);
 
     return () => {
+      isCancelled = true;
       if (rafIdRef.current) {
         cancelAnimationFrame(rafIdRef.current);
       }
-      window.removeEventListener('mousedown', onMouseDown);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-      window.removeEventListener('mouseleave', onMouseUp);
-      window.removeEventListener('touchstart', onTouchStart);
-      window.removeEventListener('touchmove', onTouchMove);
-      window.removeEventListener('touchend', onTouchEnd);
-      window.removeEventListener('touchcancel', onTouchEnd);
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseleave', handlePointerEnd);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handlePointerEnd);
+      window.removeEventListener('touchcancel', handlePointerEnd);
     };
   }, []);
 
-  const handleSeeked = () => {
-    const video = videoRef.current;
-    if (!video || !video.duration) return;
-
-    // If target has progressed while seeking, seamlessly sync to the latest lerp position
-    const diff = currentLerpTimeRef.current - video.currentTime;
-    if (Math.abs(diff) > 0.03 && !video.seeking) {
-      try {
-        if ('fastSeek' in video && typeof (video as any).fastSeek === 'function') {
-          (video as any).fastSeek(currentLerpTimeRef.current);
-        } else {
-          video.currentTime = currentLerpTimeRef.current;
-        }
-      } catch {
-        video.currentTime = currentLerpTimeRef.current;
-      }
-    }
-  };
-
-  const handleLoadedMetadata = () => {
-    if (videoRef.current) {
-      const initialTime = videoRef.current.currentTime || 0;
-      targetTimeRef.current = initialTime;
-      currentLerpTimeRef.current = initialTime;
-    }
-  };
-
   return (
-    <video
-      ref={videoRef}
-      id="background-video"
-      src={VIDEO_URL}
-      muted
-      playsInline
-      preload="auto"
-      onSeeked={handleSeeked}
-      onLoadedMetadata={handleLoadedMetadata}
-      className="fixed inset-0 z-0 w-full h-full pointer-events-none transition-opacity duration-700"
-      style={{
-        objectFit: 'cover',
-      }}
+    <canvas
+      ref={canvasRef}
+      id="background-canvas"
+      className="fixed inset-0 z-0 w-full h-full pointer-events-none transition-opacity duration-500"
     />
   );
 }

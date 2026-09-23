@@ -21,26 +21,14 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Responsive 3D background video positioning:
- * - Mobile: center-top (prevents overlapping bottom-aligned text)
- * - Tablet: center 36% (generous headroom for 3D cube above typewriter headline)
- * - Desktop: 70% center (places cube on the right, text on the left)
- */
+/* Responsive 3D background canvas/video positioning */
+#background-canvas,
 #background-video {
-  object-fit: cover;
-  object-position: center 36%;
-}
-
-@media (min-width: 640px) and (max-width: 1023px) {
-  #background-video {
-    object-position: center 36%;
-  }
-}
-
-@media (min-width: 1024px) {
-  #background-video {
-    object-position: 70% center;
-  }
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 @keyframes blink {
